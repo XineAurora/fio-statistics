@@ -1,11 +1,24 @@
 package intrernal
 
-import "github.com/segmentio/kafka-go"
+import (
+	"context"
+
+	"github.com/segmentio/kafka-go"
+)
 
 type KafkaMessageConsumer struct {
-	conn *kafka.Conn
+	reader *kafka.Reader
 }
 
-func NewKafkaMessageConsumer(conn *kafka.Conn) KafkaMessageConsumer {
-	return KafkaMessageConsumer{conn: conn}
+func NewKafkaMessageConsumer(reader *kafka.Reader) KafkaMessageConsumer {
+	return KafkaMessageConsumer{reader: reader}
+}
+
+func (mc *KafkaMessageConsumer) Read() ([]byte, error) {
+	msg, err := mc.reader.ReadMessage(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	return msg.Value, nil
 }
