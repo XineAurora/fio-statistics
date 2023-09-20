@@ -35,10 +35,11 @@ func (e MockEnricher) GetNationality(name string) (string, error) {
 func TestEnrichmentOk(t *testing.T) {
 	enr := MockEnricher{}
 
-	fio := entities.FIO{Name: "Test", Surname: "Test"}
-	fioEnrichedExpected := entities.FIOEnriched{FIO: fio, Age: 999, Gender: "combat helicopter", Nationality: "USSR"}
+	fio := entities.BasicFIO{Name: "Test", Surname: "Test"}
+	fioEnrichedExpected := entities.FIO{Name: fio.Name, Surname: fio.Surname, Patronymic: fio.Patronymic,
+		Age: 999, Gender: "combat helicopter", Nationality: "USSR"}
 
-	fioEnriched, err := entities.EnrichFIO(fio, enr)
+	fioEnriched, err := fio.EnrichFIO(enr)
 	assert.Nil(t, err)
 	assert.Equal(t, fioEnrichedExpected, fioEnriched)
 }
@@ -53,22 +54,22 @@ func TestFIOConstructor(t *testing.T) {
 		{
 			"ok",
 			[]byte(`{"name":"Joseph","surname":"Jostar","patronymic":"George"}`),
-			entities.FIO{Name: "Joseph", Surname: "Jostar", Patronymic: "George"},
+			entities.BasicFIO{Name: "Joseph", Surname: "Jostar", Patronymic: "George"},
 		},
 		{
 			"ok without patronymic",
 			[]byte(`{"name":"Joseph","surname":"Jostar"}`),
-			entities.FIO{Name: "Joseph", Surname: "Jostar"},
+			entities.BasicFIO{Name: "Joseph", Surname: "Jostar"},
 		},
 		{
 			"missing surname",
 			[]byte(`{"name":"Joseph","patronymic":"George"}`),
-			entities.FIO{Name: "Joseph", Patronymic: "George"},
+			entities.BasicFIO{Name: "Joseph", Patronymic: "George"},
 		},
 		{
 			"missing name",
 			[]byte(`{"surname":"Jostar","patronymic":"George"}`),
-			entities.FIO{Surname: "Jostar", Patronymic: "George"},
+			entities.BasicFIO{Surname: "Jostar", Patronymic: "George"},
 		},
 		{
 			"wrong json format error",
@@ -90,29 +91,29 @@ func TestFIOConstructor(t *testing.T) {
 func TestFIOValid(t *testing.T) {
 	type test struct {
 		Name     string
-		Fio      entities.FIO
+		Fio      entities.BasicFIO
 		Expected interface{} //FIO or error
 	}
 
 	tests := []test{
 		{
 			Name:     "Valid FIO",
-			Fio:      entities.FIO{"Test", "FIO", "with patronymic"},
+			Fio:      entities.BasicFIO{"Test", "FIO", "with patronymic"},
 			Expected: nil,
 		},
 		{
 			Name:     "Valid FIO without patronymic",
-			Fio:      entities.FIO{Name: "Test", Surname: "FIO"},
+			Fio:      entities.BasicFIO{Name: "Test", Surname: "FIO"},
 			Expected: nil,
 		},
 		{
 			Name:     "Invalid FIO without Surname",
-			Fio:      entities.FIO{Name: "Surnameless", Patronymic: "123"},
+			Fio:      entities.BasicFIO{Name: "Surnameless", Patronymic: "123"},
 			Expected: errors.New("require a surname"),
 		},
 		{
 			Name:     "Invalid FIO without Name",
-			Fio:      entities.FIO{Surname: "Nameless", Patronymic: "123456"},
+			Fio:      entities.BasicFIO{Surname: "Nameless", Patronymic: "123456"},
 			Expected: errors.New("require a name"),
 		},
 	}

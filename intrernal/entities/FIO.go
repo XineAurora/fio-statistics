@@ -1,32 +1,11 @@
 package entities
 
-import (
-	"encoding/json"
-	"errors"
-)
-
 type FIO struct {
-	Name       string `json:"name"`
-	Surname    string `json:"surname"`
-	Patronymic string `json:"patronymic,omitempty"`
-}
-
-func NewFIO(rawJson []byte) (FIO, error) {
-	var fio FIO
-	err := json.Unmarshal(rawJson, &fio)
-	if err != nil {
-		return fio, err
-	}
-	return fio, nil
-}
-
-func (fio FIO) Validate() error {
-	if fio.Name == "" {
-		return errors.New("require a name")
-	}
-	if fio.Surname == "" {
-		return errors.New("require a surname")
-	}
-
-	return nil
+	ID          uint   `json:"id" gorm:"primaryKey;autoIncrement"`
+	Name        string `json:"name" gorm:"not null"`
+	Surname     string `json:"surname" gorm:"not null"`
+	Patronymic  string `json:"patronymic,omitempty"`
+	Age         int    `json:"age" gorm:"not null"`
+	Gender      string `json:"gender" gorm:"not null"`
+	Nationality string `json:"nationality" gorm:"not null"`
 }
