@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin/binding"
 )
 
-func ApiServer(repo database.FIORepository) *http.Server {
+func NewApiServer(repo database.FIORepository) *http.Server {
 	return &http.Server{
 		Addr:    ":" + os.Getenv("API_PORT"),
 		Handler: setupRouter(repo),

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/XineAurora/fio-statistics/intrernal/api"
 	"github.com/XineAurora/fio-statistics/intrernal/database"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -30,8 +31,11 @@ func New() *App {
 	if err != nil {
 		log.Fatal(err)
 	}
+	repo := database.NewDBFIORepository(db)
 	return &App{
-		repo: database.NewDBFIORepository(db),
+		repo: repo,
+		api:  api.NewApiServer(repo),
+		// kafka worker
 	}
 }
 
