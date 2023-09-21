@@ -1,10 +1,14 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/XineAurora/fio-statistics/intrernal/api"
 	"github.com/XineAurora/fio-statistics/intrernal/database"
@@ -40,5 +44,27 @@ func New() *App {
 }
 
 func (app *App) Run() {
+	// run api
+	go func() {
+		if err := app.api.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("error on api server: %s\n", err.Error())
+		}
+	}()
 
+	// run message handler
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	if err := app.api.Shutdown(ctx); err != nil {
+		log.Fatalf("server shutdown error: %s\n", err.Error())
+	}
+	select {
+	case <-ctx.Done():
+		log.Println("server shutdown timed out")
+	}
+	log.Println("server closing")
 }
