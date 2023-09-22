@@ -12,6 +12,9 @@ import (
 
 	"github.com/XineAurora/fio-statistics/intrernal/api"
 	"github.com/XineAurora/fio-statistics/intrernal/database"
+	"github.com/XineAurora/fio-statistics/intrernal/enricher"
+	"github.com/XineAurora/fio-statistics/intrernal/message"
+	"github.com/segmentio/kafka-go"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -21,8 +24,9 @@ import (
 // run api
 
 type App struct {
-	repo database.FIORepository
-	api  *http.Server
+	repo       database.FIORepository
+	api        *http.Server
+	msgHandler *message.MessageHandler
 }
 
 func New() *App {
@@ -36,10 +40,24 @@ func New() *App {
 		log.Fatal(err)
 	}
 	repo := database.NewDBFIORepository(db)
+
+	r := kafka.NewReader(kafka.ReaderConfig{
+		Brokers:  []string{os.Getenv("KAFKA_HOST")},
+		Topic:    os.Getenv("KAFKA_FIO_TOPIC"),
+		GroupID:  os.Getenv("KAFKA_READER_GROUP"),
+		MaxBytes: 1e6,
+	})
+	consumer := message.NewKafkaMessageConsumer(r)
+
+	w := kafka.NewWriter(kafka.WriterConfig{
+		Brokers: []string{os.Getenv("KAFKA_HOST")},
+		Topic:   os.Getenv("KAFKA_FIO_FAILED_TOPIC"),
+	})
+	producer := message.NewKafkaMessageProducer(w)
 	return &App{
-		repo: repo,
-		api:  api.NewApiServer(repo),
-		// kafka worker
+		repo:       repo,
+		api:        api.NewApiServer(repo),
+		msgHandler: message.NewMessageHandler(consumer, producer, repo, enricher.NewOpenEnricher(http.Client{Timeout: time.Second * 10})),
 	}
 }
 
@@ -52,10 +70,17 @@ func (app *App) Run() {
 	}()
 
 	// run message handler
+	go func() {
+		if err := app.msgHandler.Start(); err != nil {
+			log.Fatalf("error on message handler: %s\n", err.Error())
+		}
+	}()
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
+
+	app.msgHandler.Stop()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()

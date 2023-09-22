@@ -1,7 +1,16 @@
 package main
 
-import "fmt"
+import (
+	"github.com/XineAurora/fio-statistics/intrernal/app"
+	_ "github.com/joho/godotenv/autoload"
+)
+
+// consume message
+// verify message
+// enrich message
+// put in db
 
 func main() {
-	fmt.Println("Hello world")
+	a := app.New()
+	a.Run()
 }

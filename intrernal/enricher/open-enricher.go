@@ -20,8 +20,8 @@ type OpenEnricher struct {
 	client http.Client
 }
 
-func NewOpenEnricher(client http.Client) OpenEnricher {
-	return OpenEnricher{apiKey: "", client: client}
+func NewOpenEnricher(client http.Client) *OpenEnricher {
+	return &OpenEnricher{apiKey: "", client: client}
 }
 
 func NewOpenEnricherWithApiKey(client http.Client, apiKey string) OpenEnricher {
