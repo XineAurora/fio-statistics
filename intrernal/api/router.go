@@ -37,12 +37,14 @@ func getFIOs(repo database.FIORepository) gin.HandlerFunc {
 		var fiter database.FIOFilter
 		if err := c.BindWith(&fiter, binding.JSON); err != nil {
 			abortWithError(c, http.StatusBadRequest, "bad body")
+			return
 		}
 		page, _ := strconv.Atoi(c.Query("page"))
 		onPage, _ := strconv.Atoi(c.Query("onpage"))
 		fios, err := repo.GetFIOs(fiter, database.Pagination{Page: page, OnPage: onPage})
 		if err != nil {
 			abortWithError(c, http.StatusInternalServerError, err.Error())
+			return
 		}
 		c.JSON(http.StatusOK, fios)
 	}
@@ -53,13 +55,16 @@ func createFIO(repo database.FIORepository) gin.HandlerFunc {
 		var fio entities.FIO
 		if err := c.BindWith(&fio, binding.JSON); err != nil {
 			abortWithError(c, http.StatusBadRequest, "bad body")
+			return
 		}
 		if err := fio.Validate(); err != nil {
 			abortWithError(c, http.StatusBadRequest, err.Error())
+			return
 		}
 		fio, err := repo.CreateFIO(fio)
 		if err != nil {
 			abortWithError(c, http.StatusInternalServerError, err.Error())
+			return
 		}
 		c.JSON(http.StatusOK, fio)
 	}
@@ -71,9 +76,11 @@ func deleteFIO(repo database.FIORepository) gin.HandlerFunc {
 		id, err := strconv.ParseUint(id_str, 10, 32)
 		if err != nil || id <= 0 {
 			abortWithError(c, http.StatusBadRequest, "id must be positive integer")
+			return
 		}
 		if err := repo.DeleteFIO(uint(id)); err != nil {
 			abortWithError(c, http.StatusInternalServerError, err.Error())
+			return
 		}
 		c.Status(http.StatusOK)
 	}
@@ -84,15 +91,19 @@ func updateFIO(repo database.FIORepository) gin.HandlerFunc {
 		var fio entities.FIO
 		if err := c.BindWith(&fio, binding.JSON); err != nil {
 			abortWithError(c, http.StatusBadRequest, "bad body")
+			return
 		}
 		if err := fio.Validate(); err != nil {
 			abortWithError(c, http.StatusBadRequest, err.Error())
+			return
 		}
 		if fio.ID == 0 {
 			abortWithError(c, http.StatusBadRequest, "id must be positive integer")
+			return
 		}
 		if err := repo.UpdateFIO(fio); err != nil {
 			abortWithError(c, http.StatusInternalServerError, err.Error())
+			return
 		}
 		c.Status(http.StatusOK)
 	}
