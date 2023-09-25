@@ -66,7 +66,7 @@ func (r *DBFIORepository) UpdateFIO(fio entities.FIO) error {
 	if fio.ID == 0 {
 		return errors.New("id is required")
 	}
-	if err := r.db.Save(&fio).Error; err != nil {
+	if err := r.db.Model(&fio).Updates(fio).Error; err != nil {
 		return err
 	}
 	return nil
