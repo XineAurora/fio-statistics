@@ -25,7 +25,7 @@ func setupRouter(repo database.FIORepository) *gin.Engine {
 	{
 		fioRoutes.GET("/", getFIOs(repo))
 		fioRoutes.POST("/", createFIO(repo))
-		fioRoutes.DELETE("/", deleteFIO(repo))
+		fioRoutes.DELETE("/:id", deleteFIO(repo))
 		fioRoutes.PUT("/", updateFIO(repo))
 	}
 
